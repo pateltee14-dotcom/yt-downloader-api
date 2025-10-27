@@ -4,7 +4,7 @@ import yt_dlp
 
 app = FastAPI()
 
-# Request body structure define karo – yeh Step Important hai!
+# Request ka model
 class DownloadRequest(BaseModel):
     youtube_url: str
 
@@ -12,12 +12,15 @@ class DownloadRequest(BaseModel):
 def home():
     return {"message": "YouTube Downloader API Ready!"}
 
-# Ab is function me DownloadRequest ka use karo
+# Main download endpoint
 @app.post("/download")
 async def download_video(req: DownloadRequest):
     try:
         url = req.youtube_url
-        ydl_opts = {"format": "best"}
+        ydl_opts = {
+            "format": "best",
+            "cookiefile": "cookies.txt"   # yahi name/upload hai to work karega
+        }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             filename = ydl.prepare_filename(info)
