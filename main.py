@@ -1,28 +1,30 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from pydantic import BaseModel
 import yt_dlp
 
 app = FastAPI()
+
+# Request body structure define karo – yeh Step Important hai!
+class DownloadRequest(BaseModel):
+    youtube_url: str
 
 @app.get("/")
 def home():
     return {"message": "YouTube Downloader API Ready!"}
 
+# Ab is function me DownloadRequest ka use karo
 @app.post("/download")
-async def download_video(request: Request):
-    data = await request.json()
-    url = data.get("youtube_url")
-    ydl_opts = {"format": "best"}
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info)
-    return {
-        "success": True,
-        "file": filename,
-        "title": info.get("title"),
-        "duration": info.get("duration")
-    }
-
-# For running on Replit
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+async def download_video(req: DownloadRequest):
+    try:
+        url = req.youtube_url
+        ydl_opts = {"format": "best"}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            filename = ydl.prepare_filename(info)
+        return {
+            "success": True,
+            "file": filename,
+            "title": info.get("title")
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
